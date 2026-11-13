@@ -11,6 +11,23 @@ void main() {
     'Onedrive': ('onedrive', 'onedrive_pr'),
   };
 
+  test('normalizes a custom Google Drive API origin', () {
+    expect(googleDriveApiAddress(''), defaultGoogleDriveApiAddress);
+    expect(
+      googleDriveApiAddress('https://openlist.yutro.uk'),
+      'https://openlist.yutro.uk/googleui/renewapi',
+    );
+    expect(
+      googleDriveApiAddress('https://openlist.yutro.uk/googleui/renewapi'),
+      'https://openlist.yutro.uk/googleui/renewapi',
+    );
+    expect(
+      openListTokenPageUri('https://openlist.yutro.uk/googleui/renewapi'),
+      Uri.parse('https://openlist.yutro.uk'),
+    );
+    expect(() => googleDriveApiAddress('not a url'), throwsFormatException);
+  });
+
   test('uses the selected OAuth modes with official OpenList parameters', () {
     for (final provider in providers.entries) {
       final uri = openListLoginUri(provider.key);

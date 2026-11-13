@@ -282,6 +282,11 @@ class _StorageAccountPageState extends State<_StorageAccountPage> {
   late final TextEditingController _cookie = TextEditingController(
     text: widget.initial?.authorization['cookie'] as String?,
   );
+  late final TextEditingController _apiUrl = TextEditingController(
+    text:
+        widget.initial?.authorization['api_url_address'] as String? ??
+        defaultGoogleDriveApiAddress,
+  );
   String get _driver => widget.driver;
   String? _error;
   bool _loggingIn = false;
@@ -294,6 +299,7 @@ class _StorageAccountPageState extends State<_StorageAccountPage> {
     _accessToken.dispose();
     _refreshToken.dispose();
     _cookie.dispose();
+    _apiUrl.dispose();
     super.dispose();
   }
 
@@ -387,16 +393,32 @@ class _StorageAccountPageState extends State<_StorageAccountPage> {
                             ),
                           ),
                           if (!hasLogin) ...[
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _apiUrl,
+                              keyboardType: TextInputType.url,
+                              autocorrect: false,
+                              decoration: InputDecoration(
+                                labelText: 'OpenList API URL'.tl,
+                                helperText: defaultGoogleDriveApiAddress,
+                              ),
+                            ),
                             Text(
                               'Use parameters provided by OpenList on the token page, then fill in the required tokens.'
                                   .tl,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                             TextButton.icon(
-                              onPressed: () => launchUrl(
-                                Uri.parse('https://api.oplist.org/'),
-                                mode: LaunchMode.externalApplication,
-                              ),
+                              onPressed: () {
+                                try {
+                                  launchUrl(
+                                    openListTokenPageUri(_apiUrl.text),
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                } on FormatException catch (error) {
+                                  setState(() => _error = error.message);
+                                }
+                              },
                               icon: const Icon(Icons.open_in_new),
                               label: Text('Open OpenList token page'.tl),
                             ),
@@ -486,6 +508,10 @@ class _StorageAccountPageState extends State<_StorageAccountPage> {
               cookie: _cookie.text,
               authorization: _authorization,
             );
+      if (_driver == 'GoogleDrive') {
+        auth['use_online_api'] = true;
+        auth['api_url_address'] = googleDriveApiAddress(_apiUrl.text);
+      }
       Navigator.pop(
         context,
         StorageAccount(

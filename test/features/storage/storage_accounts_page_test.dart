@@ -32,7 +32,7 @@ void main() {
       ('BaiduNetdisk', ['Refresh Token']),
       ('123 Open', ['Refresh Token']),
       ('Onedrive', ['Refresh Token']),
-      ('GoogleDrive', ['Refresh Token']),
+      ('GoogleDrive', ['Refresh Token', 'OpenList API URL']),
     ]) {
       final provider = find.widgetWithText(ListTile, driver);
       await tester.ensureVisible(provider);
@@ -376,6 +376,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(accounts.saved!.authorization['refresh_token'], 'refresh');
     expect(accounts.saved!.authorization['use_online_api'], isTrue);
+  });
+
+  testWidgets('Google Drive keeps a custom OpenList API address', (
+    tester,
+  ) async {
+    final accounts = _Accounts();
+    await tester.pumpWidget(
+      MaterialApp(home: StorageAccountsPage(accounts: accounts)),
+    );
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ListTile, 'GoogleDrive'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(
+        find.widgetWithText(TextField, 'OpenList API URL'),
+      ).controller!.text,
+      defaultGoogleDriveApiAddress,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Refresh Token'),
+      'refresh',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'OpenList API URL'),
+      'https://openlist.yutro.uk',
+    );
+    await tester.tap(find.text('Save and test connection'));
+    await tester.pumpAndSettle();
+    expect(accounts.saved!.authorization['refresh_token'], 'refresh');
+    expect(accounts.saved!.authorization['use_online_api'], isTrue);
+    expect(
+      accounts.saved!.authorization['api_url_address'],
+      'https://openlist.yutro.uk/googleui/renewapi',
+    );
   });
 
   testWidgets('manual token edits replace old tokens and preserve settings', (

@@ -16,6 +16,40 @@ const openListLoginDrivers = <String, String>{
   'Onedrive': 'onedrive_pr',
 };
 
+const openListOfficialOrigin = 'https://api.oplist.org';
+
+const googleDriveApiPath = '/googleui/renewapi';
+
+const defaultGoogleDriveApiAddress =
+    '$openListOfficialOrigin$googleDriveApiPath';
+
+/// Accepts a site origin or a full renew URL and returns the Google Drive
+/// online-API address stored in OpenList's `api_url_address` field.
+String googleDriveApiAddress(String input) {
+  final trimmed = input.trim();
+  if (trimmed.isEmpty) return defaultGoogleDriveApiAddress;
+  final uri = Uri.tryParse(trimmed);
+  if (uri == null ||
+      (uri.scheme != 'https' && uri.scheme != 'http') ||
+      uri.host.isEmpty) {
+    throw const FormatException('API URL is invalid');
+  }
+  if (uri.path.isEmpty || uri.path == '/') {
+    return uri.replace(path: googleDriveApiPath).removeFragment().toString();
+  }
+  return uri.removeFragment().toString();
+}
+
+Uri openListTokenPageUri(String input) {
+  final address = googleDriveApiAddress(input);
+  final uri = Uri.parse(address);
+  return Uri(
+    scheme: uri.scheme,
+    host: uri.host,
+    port: uri.hasPort ? uri.port : null,
+  );
+}
+
 Uri openListLoginUri(String driver) {
   final loginDriver = openListLoginDrivers[driver];
   if (loginDriver == null) {
